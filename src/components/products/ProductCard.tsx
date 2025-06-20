@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
@@ -28,7 +29,9 @@ const ProductCard = ({
   inStock 
 }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  const isWishlisted = isInWishlist(id);
 
   const handleAddToCart = () => {
     if (!inStock) return;
@@ -44,6 +47,27 @@ const ProductCard = ({
       title: "Added to cart",
       description: `${name} has been added to your cart.`,
     });
+  };
+
+  const handleWishlistToggle = () => {
+    if (isWishlisted) {
+      removeFromWishlist(id);
+      toast({
+        title: "Removed from wishlist",
+        description: `${name} has been removed from your wishlist.`,
+      });
+    } else {
+      addToWishlist({
+        id,
+        name,
+        price,
+        image,
+      });
+      toast({
+        title: "Added to wishlist",
+        description: `${name} has been added to your wishlist.`,
+      });
+    }
   };
 
   return (
@@ -73,8 +97,15 @@ const ProductCard = ({
         </div>
 
         {/* Wishlist Button */}
-        <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-gray-50">
-          <Heart className="h-4 w-4 text-gray-600 hover:text-red-500 transition-colors" />
+        <button 
+          onClick={handleWishlistToggle}
+          className={`absolute top-3 right-3 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 ${
+            isWishlisted 
+              ? 'bg-red-500 text-white hover:bg-red-600' 
+              : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-red-500'
+          }`}
+        >
+          <Heart className={`h-4 w-4 transition-colors ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
 
         {/* Quick Add to Cart */}
@@ -118,11 +149,11 @@ const ProductCard = ({
         {/* Price */}
         <div className="flex items-center space-x-2">
           <span className="text-lg font-bold text-gray-900">
-            ${price.toFixed(2)}
+            Ksh {price.toLocaleString()}
           </span>
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              ${originalPrice.toFixed(2)}
+              Ksh {originalPrice.toLocaleString()}
             </span>
           )}
         </div>
