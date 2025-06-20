@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -8,15 +9,25 @@ import { Button } from '@/components/ui/button';
 import { products } from '@/data/products';
 
 const Products = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
   const [sortBy, setSortBy] = useState('name');
 
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
 
+  // Update state when URL parameters change
+  useEffect(() => {
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || 'All';
+    setSearchTerm(search);
+    setSelectedCategory(category);
+  }, [searchParams]);
+
   const filteredProducts = products
     .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
@@ -32,6 +43,28 @@ const Products = () => {
           return a.name.localeCompare(b.name);
       }
     });
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('search', value);
+    } else {
+      newParams.delete('search');
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value !== 'All') {
+      newParams.set('category', value);
+    } else {
+      newParams.delete('category');
+    }
+    setSearchParams(newParams);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -56,7 +89,7 @@ const Products = () => {
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -64,7 +97,7 @@ const Products = () => {
             {/* Category Filter */}
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {categories.map(category => (
@@ -90,6 +123,8 @@ const Products = () => {
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-600">
             Showing {filteredProducts.length} of {products.length} products
+            {searchTerm && ` for "${searchTerm}"`}
+            {selectedCategory !== 'All' && ` in ${selectedCategory}`}
           </p>
         </div>
 
@@ -105,6 +140,16 @@ const Products = () => {
           <div className="text-center py-12">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-600">Try adjusting your search criteria</p>
+            <Button 
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory('All');
+                setSearchParams({});
+              }}
+              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Clear Filters
+            </Button>
           </div>
         )}
       </main>

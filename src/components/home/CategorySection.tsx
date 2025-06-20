@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Laptop, Smartphone, Headphones, Camera, Watch, Gamepad2 } from 'lucide-react';
 
 const CategorySection = () => {
@@ -43,7 +44,7 @@ const CategorySection = () => {
   ];
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section id="categories" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Shop by Category</h2>
@@ -56,8 +57,9 @@ const CategorySection = () => {
           {categories.map((category, index) => {
             const Icon = category.icon;
             return (
-              <div 
+              <Link 
                 key={index}
+                to={`/products?category=${encodeURIComponent(category.name)}`}
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group hover:transform hover:scale-105"
               >
                 <div className={`${category.color} p-3 rounded-lg mb-4 inline-flex group-hover:shadow-lg transition-shadow`}>
@@ -69,7 +71,7 @@ const CategorySection = () => {
                 <p className="text-sm text-gray-600">
                   {category.count} products
                 </p>
-              </div>
+              </Link>
             );
           })}
         </div>
