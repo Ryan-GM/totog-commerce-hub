@@ -2,6 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   id: string;
@@ -24,17 +27,36 @@ const ProductCard = ({
   reviews, 
   inStock 
 }: ProductCardProps) => {
+  const { addItem } = useCart();
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+
+  const handleAddToCart = () => {
+    if (!inStock) return;
+    
+    addItem({
+      id,
+      name,
+      price,
+      image,
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${name} has been added to your cart.`,
+    });
+  };
 
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
       {/* Image Container */}
       <div className="relative overflow-hidden">
-        <img 
-          src={image} 
-          alt={name}
-          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        <Link to={`/product/${id}`}>
+          <img 
+            src={image} 
+            alt={name}
+            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+          />
+        </Link>
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -60,6 +82,7 @@ const ProductCard = ({
           <Button 
             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             disabled={!inStock}
+            onClick={handleAddToCart}
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
             Add to Cart
@@ -69,9 +92,11 @@ const ProductCard = ({
 
       {/* Product Info */}
       <div className="p-4 space-y-3">
-        <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
-          {name}
-        </h3>
+        <Link to={`/product/${id}`}>
+          <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
+            {name}
+          </h3>
+        </Link>
 
         {/* Rating */}
         <div className="flex items-center space-x-2">

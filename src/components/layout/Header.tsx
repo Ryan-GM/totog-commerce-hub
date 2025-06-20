@@ -1,27 +1,47 @@
 
-import React from 'react';
-import { Search, ShoppingCart, User, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
 
 const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { itemCount } = useCart();
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="md:hidden">
-              <Menu className="h-5 w-5" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <h1 className="text-2xl font-bold text-blue-600">TotoG</h1>
+            <Link to="/">
+              <h1 className="text-2xl font-bold text-blue-600">TotoG</h1>
+            </Link>
           </div>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Home</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Products</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Categories</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
+            <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Home
+            </Link>
+            <Link to="/products" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Products
+            </Link>
+            <a href="#categories" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Categories
+            </a>
+            <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
+              About
+            </a>
           </nav>
 
           {/* Search Bar */}
@@ -38,20 +58,62 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <Link to="/cart">
+              <Button variant="ghost" size="sm" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm">
               <User className="h-5 w-5" />
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Sign In
-            </Button>
+            <Link to="/login">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                Sign In
+              </Button>
+            </Link>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t bg-white py-4">
+            <nav className="flex flex-col space-y-4">
+              <Link 
+                to="/" 
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/products" 
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Products
+              </Link>
+              <a 
+                href="#categories" 
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Categories
+              </a>
+              <a 
+                href="#about" 
+                className="text-gray-600 hover:text-blue-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                About
+              </a>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
