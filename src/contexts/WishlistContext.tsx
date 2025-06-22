@@ -1,19 +1,12 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface WishlistItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-}
+import React, { createContext, useContext } from 'react';
+import { useWishlist as useWishlistHook } from '@/hooks/useWishlist';
 
 interface WishlistContextType {
-  items: WishlistItem[];
-  addToWishlist: (item: WishlistItem) => void;
+  items: any[];
+  addToWishlist: (id: string) => void;
   removeFromWishlist: (id: string) => void;
-  isInWishlist: (id: string) => boolean;
-  itemCount: number;
+  isLoading: boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -26,37 +19,15 @@ export const useWishlist = () => {
   return context;
 };
 
-interface WishlistProviderProps {
-  children: ReactNode;
-}
-
-export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) => {
-  const [items, setItems] = useState<WishlistItem[]>([]);
-
-  const addToWishlist = (item: WishlistItem) => {
-    setItems(prev => {
-      if (prev.find(i => i.id === item.id)) return prev;
-      return [...prev, item];
-    });
-  };
-
-  const removeFromWishlist = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const isInWishlist = (id: string) => {
-    return items.some(item => item.id === id);
-  };
-
-  const itemCount = items.length;
+export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { items, addToWishlist, removeFromWishlist, isLoading } = useWishlistHook();
 
   return (
     <WishlistContext.Provider value={{
       items,
       addToWishlist,
       removeFromWishlist,
-      isInWishlist,
-      itemCount
+      isLoading,
     }}>
       {children}
     </WishlistContext.Provider>

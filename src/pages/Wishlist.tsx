@@ -7,10 +7,9 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Trash2, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
 
 const Wishlist = () => {
-  const { items, removeFromWishlist } = useWishlist();
+  const { items, removeFromWishlist, isLoading } = useWishlist();
   const { addItem } = useCart();
 
   const handleAddToCart = (item: any) => {
@@ -20,20 +19,25 @@ const Wishlist = () => {
       price: item.price,
       image: item.image,
     });
-    
-    toast({
-      title: "Added to cart",
-      description: `${item.name} has been added to your cart.`,
-    });
   };
 
   const handleRemoveFromWishlist = (id: string, name: string) => {
     removeFromWishlist(id);
-    toast({
-      title: "Removed from wishlist",
-      description: `${name} has been removed from your wishlist.`,
-    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

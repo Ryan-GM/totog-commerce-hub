@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { products } from '@/data/products';
+import { useProducts, useCategories } from '@/hooks/useProducts';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,7 +14,13 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
   const [sortBy, setSortBy] = useState('name');
 
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const { data: categories = [] } = useCategories();
+  const categoryOptions = ['All', ...categories.map(c => c.name)];
+
+  const { data: products = [], isLoading } = useProducts({
+    category: selectedCategory,
+    search: searchTerm,
+  });
 
   // Update state when URL parameters change
   useEffect(() => {
@@ -24,25 +30,18 @@ const Products = () => {
     setSelectedCategory(category);
   }, [searchParams]);
 
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'rating':
-          return b.rating - a.rating;
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low':
+        return Number(a.price) - Number(b.price);
+      case 'price-high':
+        return Number(b.price) - Number(a.price);
+      case 'rating':
+        return 4.5 - 4.5; // Default rating comparison
+      default:
+        return a.name.localeCompare(b.name);
+    }
+  });
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -65,6 +64,20 @@ const Products = () => {
     }
     setSearchParams(newParams);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -100,7 +113,7 @@ const Products = () => {
               onChange={(e) => handleCategoryChange(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {categories.map(category => (
+              {categoryOptions.map(category => (
                 <option key={category} value={category}>{category}</option>
               ))}
             </select>
@@ -122,7 +135,7 @@ const Products = () => {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-600">
-            Showing {filteredProducts.length} of {products.length} products
+            Showing {sortedProducts.length} products
             {searchTerm && ` for "${searchTerm}"`}
             {selectedCategory !== 'All' && ` in ${selectedCategory}`}
           </p>
@@ -130,13 +143,26 @@ const Products = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
+          {sortedProducts.map((product) => (
+            <ProductCard 
+              key={product.id} 
+              id={product.id}
+              name={product.name}
+              price={Number(product.price)}
+              originalPrice={product.original_price ? Number(product.original_price) : undefined}
+              image={product.images?.[0] || '/placeholder.svg'}
+              category={product.categories?.name || 'Electronics'}
+              rating={4.5}
+              reviews={120}
+              description={product.description || ''}
+              features={product.features || []}
+              inStock={product.stock_quantity > 0}
+            />
           ))}
         </div>
 
         {/* No Results */}
-        {filteredProducts.length === 0 && (
+        {sortedProducts.length === 0 && (
           <div className="text-center py-12">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-600">Try adjusting your search criteria</p>
