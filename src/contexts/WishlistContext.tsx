@@ -4,8 +4,10 @@ import { useWishlist as useWishlistHook } from '@/hooks/useWishlist';
 
 interface WishlistContextType {
   items: any[];
+  itemCount: number;
   addToWishlist: (id: string) => void;
   removeFromWishlist: (id: string) => void;
+  isInWishlist: (id: string) => boolean;
   isLoading: boolean;
 }
 
@@ -22,11 +24,17 @@ export const useWishlist = () => {
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { items, addToWishlist, removeFromWishlist, isLoading } = useWishlistHook();
 
+  const isInWishlist = (id: string) => {
+    return items.some(item => item.id === id);
+  };
+
   return (
     <WishlistContext.Provider value={{
       items,
+      itemCount: items.length,
       addToWishlist,
       removeFromWishlist,
+      isInWishlist,
       isLoading,
     }}>
       {children}

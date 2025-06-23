@@ -1,7 +1,31 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, Category, Brand } from '@/types/database';
+
+// Extended Product type with joined data
+export interface ProductWithRelations {
+  id: string;
+  name: string;
+  description: string | null;
+  short_description: string | null;
+  price: number;
+  original_price: number | null;
+  sku: string | null;
+  stock_quantity: number;
+  category_id: string | null;
+  brand_id: string | null;
+  images: string[];
+  features: string[];
+  specifications: Record<string, any>;
+  is_active: boolean;
+  is_featured: boolean;
+  weight: number | null;
+  dimensions: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  categories: { name: string } | null;
+  brands: { name: string } | null;
+}
 
 export const useProducts = (filters?: {
   category?: string;
@@ -43,7 +67,7 @@ export const useProducts = (filters?: {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Product[];
+      return data as ProductWithRelations[];
     },
   });
 };
@@ -64,7 +88,7 @@ export const useProduct = (id: string) => {
         .single();
 
       if (error) throw error;
-      return data as Product;
+      return data as ProductWithRelations;
     },
   });
 };
@@ -79,7 +103,7 @@ export const useCategories = () => {
         .order('name');
 
       if (error) throw error;
-      return data as Category[];
+      return data;
     },
   });
 };
@@ -94,7 +118,7 @@ export const useBrands = () => {
         .order('name');
 
       if (error) throw error;
-      return data as Brand[];
+      return data;
     },
   });
 };

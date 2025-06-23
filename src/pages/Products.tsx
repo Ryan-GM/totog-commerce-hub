@@ -151,11 +151,8 @@ const Products = () => {
               price={Number(product.price)}
               originalPrice={product.original_price ? Number(product.original_price) : undefined}
               image={product.images?.[0] || '/placeholder.svg'}
-              category={product.categories?.name || 'Electronics'}
               rating={4.5}
               reviews={120}
-              description={product.description || ''}
-              features={product.features || []}
               inStock={product.stock_quantity > 0}
             />
           ))}

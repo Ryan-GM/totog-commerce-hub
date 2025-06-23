@@ -215,11 +215,8 @@ const ProductDetail = () => {
                   price={Number(similarProduct.price)}
                   originalPrice={similarProduct.original_price ? Number(similarProduct.original_price) : undefined}
                   image={similarProduct.images?.[0] || '/placeholder.svg'}
-                  category={similarProduct.categories?.name || 'Electronics'}
                   rating={4.5}
                   reviews={120}
-                  description={similarProduct.description || ''}
-                  features={similarProduct.features || []}
                   inStock={similarProduct.stock_quantity > 0}
                 />
               ))}
