@@ -1,97 +1,109 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Camera, Save, Lock } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { ArrowLeft, User, Lock } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import ProfileImageUpload from '@/components/profile/ProfileImageUpload';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const AccountSettings = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
-  const updateProfile = useUpdateProfile();
+  const { mutate: updateProfile } = useUpdateProfile();
   
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
     phone: '',
-    email: '',
   });
-  
-  const [passwordData, setPasswordData] = useState({
+
+  const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   React.useEffect(() => {
     if (profile) {
-      setFormData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
+      setProfileForm({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
         phone: profile.phone || '',
-        email: profile.email || '',
       });
     }
   }, [profile]);
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
+  const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate(formData);
+    updateProfile({
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+    });
   };
 
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       toast({
-        title: "Error",
+        title: "Password mismatch",
         description: "New passwords don't match.",
         variant: "destructive",
       });
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
+    if (passwordForm.newPassword.length < 6) {
       toast({
-        title: "Error",
+        title: "Password too short",
         description: "Password must be at least 6 characters long.",
         variant: "destructive",
       });
       return;
     }
 
-    // Update password with Supabase Auth
-    const { error } = await supabase.auth.updateUser({
-      password: passwordData.newPassword
-    });
+    setIsUpdatingPassword(true);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword
       });
-    } else {
+
+      if (error) throw error;
+
       toast({
-        title: "Success",
-        description: "Password updated successfully.",
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
       });
-      setPasswordData({
+
+      setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -99,8 +111,10 @@ const AccountSettings = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">Loading...</div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -123,140 +137,148 @@ const AccountSettings = () => {
           </Button>
           
           <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your profile and account preferences</p>
+          <p className="text-gray-600 mt-2">Manage your account preferences and security</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Picture */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
-              <CardDescription>Update your profile photo</CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Avatar className="h-24 w-24 mx-auto mb-4">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-xl">
-                  {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <Button variant="outline" size="sm">
-                <Camera className="h-4 w-4 mr-2" />
-                Change Photo
-              </Button>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profile">
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="security">
+              <Lock className="h-4 w-4 mr-2" />
+              Security
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Profile Information */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your personal details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="first_name">First Name</Label>
+          <TabsContent value="profile">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Profile Image */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Photo</CardTitle>
+                  <CardDescription>
+                    Update your profile picture
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <ProfileImageUpload 
+                    currentImageUrl={profile?.avatar_url}
+                    userName={profile?.first_name || user?.email?.split('@')[0]}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Profile Information */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Personal Information</CardTitle>
+                  <CardDescription>
+                    Update your personal details and contact information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleProfileSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={profileForm.firstName}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, firstName: e.target.value }))}
+                          placeholder="Enter your first name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={profileForm.lastName}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, lastName: e.target.value }))}
+                          placeholder="Enter your last name"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={user?.email || ''}
+                        disabled
+                        className="bg-gray-50"
+                      />
+                      <p className="text-sm text-gray-500">Email cannot be changed</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={profileForm.phone}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                      Save Changes
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>
+                  Update your password to keep your account secure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
                     <Input
-                      id="first_name"
-                      value={formData.first_name}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      placeholder="Enter your first name"
+                      id="newPassword"
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                      placeholder="Enter new password"
+                      required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="last_name">Last Name</Label>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
                     <Input
-                      id="last_name"
-                      value={formData.last_name}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      placeholder="Enter your last name"
+                      id="confirmPassword"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Confirm new password"
+                      required
                     />
                   </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="Enter your email"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
 
-                <Button type="submit" disabled={updateProfile.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Password Update - Full Width */}
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="h-5 w-5 mr-2" />
-                Change Password
-              </CardTitle>
-              <CardDescription>Update your account password</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
-                <div>
-                  <Label htmlFor="current_password">Current Password</Label>
-                  <Input
-                    id="current_password"
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    placeholder="Enter current password"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="new_password">New Password</Label>
-                  <Input
-                    id="new_password"
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    placeholder="Enter new password"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="confirm_password">Confirm New Password</Label>
-                  <Input
-                    id="confirm_password"
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    placeholder="Confirm new password"
-                  />
-                </div>
-
-                <Button type="submit">
-                  <Lock className="h-4 w-4 mr-2" />
-                  Update Password
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+                  <Button 
+                    type="submit" 
+                    disabled={isUpdatingPassword}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       
       <Footer />

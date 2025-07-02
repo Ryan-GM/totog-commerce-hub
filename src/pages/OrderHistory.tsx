@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Download, Eye } from 'lucide-react';
+import { ArrowLeft, Package, Download, Eye, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { useOrderTracking, getStatusLabel } from '@/hooks/useOrderTracking';
+import { formatCurrency } from '@/utils/currency';
 
 const OrderHistory = () => {
   const navigate = useNavigate();
@@ -17,37 +19,90 @@ const OrderHistory = () => {
       id: '1',
       order_number: 'ORD-20241201-0001',
       status: 'delivered',
-      total_amount: 299.99,
+      total_amount: 2999.00,
       created_at: '2024-12-01T10:00:00Z',
       items: [
-        { name: 'Premium Headphones', quantity: 1, price: 299.99 }
+        { name: 'Premium Headphones', quantity: 1, price: 2999.00 }
       ]
     },
     {
       id: '2',
       order_number: 'ORD-20241128-0002',
-      status: 'shipped',
-      total_amount: 149.99,
+      status: 'out_for_delivery',
+      total_amount: 1499.00,
       created_at: '2024-11-28T15:30:00Z',
       items: [
-        { name: 'Wireless Mouse', quantity: 2, price: 74.99 }
+        { name: 'Wireless Mouse', quantity: 2, price: 749.50 }
       ]
     }
   ];
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { variant: 'secondary' as const, label: 'Pending' },
-      confirmed: { variant: 'default' as const, label: 'Confirmed' },
-      shipped: { variant: 'default' as const, label: 'Shipped' },
-      delivered: { variant: 'default' as const, label: 'Delivered' },
-      cancelled: { variant: 'destructive' as const, label: 'Cancelled' },
+      order_placed: { variant: 'secondary' as const, label: 'Order Placed', icon: Clock },
+      processing: { variant: 'default' as const, label: 'Processing', icon: Package },
+      out_for_delivery: { variant: 'default' as const, label: 'Out for Delivery', icon: Truck },
+      delivered: { variant: 'default' as const, label: 'Delivered', icon: CheckCircle },
+      cancelled: { variant: 'destructive' as const, label: 'Cancelled', icon: AlertCircle },
     };
     
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.order_placed;
+    const Icon = config.icon;
+    
     return (
-      <Badge variant={statusConfig[status as keyof typeof statusConfig]?.variant || 'secondary'}>
-        {statusConfig[status as keyof typeof statusConfig]?.label || status}
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="h-3 w-3" />
+        {config.label}
       </Badge>
+    );
+  };
+
+  const OrderTrackingTimeline = ({ orderId }: { orderId: string }) => {
+    const { data: trackingData = [] } = useOrderTracking(orderId);
+    
+    if (trackingData.length === 0) return null;
+
+    const statuses = ['order_placed', 'processing', 'out_for_delivery', 'delivered'];
+    const currentStatusIndex = statuses.indexOf(trackingData[trackingData.length - 1]?.status || 'order_placed');
+
+    return (
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+        <h4 className="font-medium text-gray-900 mb-3">Order Tracking</h4>
+        <div className="flex items-center justify-between">
+          {statuses.map((status, index) => {
+            const isCompleted = index <= currentStatusIndex;
+            const isCurrent = index === currentStatusIndex;
+            
+            return (
+              <div key={status} className="flex flex-col items-center flex-1">
+                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                  isCompleted 
+                    ? 'bg-green-500 border-green-500 text-white' 
+                    : 'bg-white border-gray-300 text-gray-400'
+                }`}>
+                  {isCompleted ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <div className="w-2 h-2 bg-current rounded-full" />
+                  )}
+                </div>
+                <div className="mt-2 text-center">
+                  <p className={`text-xs font-medium ${
+                    isCurrent ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {getStatusLabel(status)}
+                  </p>
+                </div>
+                {index < statuses.length - 1 && (
+                  <div className={`absolute h-0.5 w-full mt-4 ${
+                    isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                  }`} style={{ left: '50%', width: 'calc(100% - 2rem)' }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   };
 
@@ -87,7 +142,7 @@ const OrderHistory = () => {
                     </div>
                     <div className="text-right">
                       {getStatusBadge(order.status)}
-                      <p className="text-xl font-bold mt-2">${order.total_amount.toFixed(2)}</p>
+                      <p className="text-xl font-bold mt-2">{formatCurrency(order.total_amount)}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -99,10 +154,12 @@ const OrderHistory = () => {
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="font-medium">${item.price.toFixed(2)}</p>
+                        <p className="font-medium">{formatCurrency(item.price)}</p>
                       </div>
                     ))}
                   </div>
+                  
+                  <OrderTrackingTimeline orderId={order.id} />
                   
                   <div className="flex items-center space-x-3 mt-4 pt-4 border-t">
                     <Button variant="outline" size="sm">
@@ -113,8 +170,9 @@ const OrderHistory = () => {
                       <Download className="h-4 w-4 mr-2" />
                       Download Invoice
                     </Button>
-                    {order.status === 'shipped' && (
+                    {order.status === 'out_for_delivery' && (
                       <Button variant="outline" size="sm">
+                        <Truck className="h-4 w-4 mr-2" />
                         Track Order
                       </Button>
                     )}

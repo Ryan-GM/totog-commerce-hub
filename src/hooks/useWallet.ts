@@ -42,6 +42,16 @@ export const useWallet = () => {
         .single();
 
       if (error) throw error;
+      
+      // Ensure currency is KES
+      if (data && data.currency !== 'KES') {
+        await supabase
+          .from('wallets')
+          .update({ currency: 'KES' })
+          .eq('id', data.id);
+        data.currency = 'KES';
+      }
+      
       return data as Wallet;
     },
     enabled: !!user,

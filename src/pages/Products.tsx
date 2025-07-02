@@ -7,26 +7,40 @@ import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
 import { useProducts, useCategories } from '@/hooks/useProducts';
+import { useDebounce } from '@/hooks/useDebounce';
+import { formatCurrency } from '@/utils/currency';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
   const [sortBy, setSortBy] = useState('name');
+
+  // Debounce search input to prevent constant reloading
+  const debouncedSearch = useDebounce(searchInput, 500);
 
   const { data: categories = [] } = useCategories();
   const categoryOptions = ['All', ...categories.map(c => c.name)];
 
   const { data: products = [], isLoading } = useProducts({
     category: selectedCategory,
-    search: searchTerm,
+    search: debouncedSearch,
   });
 
-  // Update state when URL parameters change
+  // Update URL parameters when debounced search changes
   useEffect(() => {
-    const search = searchParams.get('search') || '';
+    const newParams = new URLSearchParams(searchParams);
+    if (debouncedSearch) {
+      newParams.set('search', debouncedSearch);
+    } else {
+      newParams.delete('search');
+    }
+    setSearchParams(newParams, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  // Update state when URL parameters change (but not search to avoid conflicts)
+  useEffect(() => {
     const category = searchParams.get('category') || 'All';
-    setSearchTerm(search);
     setSelectedCategory(category);
   }, [searchParams]);
 
@@ -42,17 +56,6 @@ const Products = () => {
         return a.name.localeCompare(b.name);
     }
   });
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set('search', value);
-    } else {
-      newParams.delete('search');
-    }
-    setSearchParams(newParams);
-  };
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
@@ -101,8 +104,8 @@ const Products = () => {
               <input
                 type="text"
                 placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -136,7 +139,7 @@ const Products = () => {
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-600">
             Showing {sortedProducts.length} products
-            {searchTerm && ` for "${searchTerm}"`}
+            {debouncedSearch && ` for "${debouncedSearch}"`}
             {selectedCategory !== 'All' && ` in ${selectedCategory}`}
           </p>
         </div>
@@ -165,7 +168,7 @@ const Products = () => {
             <p className="text-gray-600">Try adjusting your search criteria</p>
             <Button 
               onClick={() => {
-                setSearchTerm('');
+                setSearchInput('');
                 setSelectedCategory('All');
                 setSearchParams({});
               }}
