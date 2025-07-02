@@ -41,7 +41,8 @@ export const useOrderTracking = (orderId?: string) => {
         }
         
         console.log('Order tracking data:', data);
-        return (data || []) as OrderTracking[];
+        // Safely cast the data to our expected type
+        return Array.isArray(data) ? data as OrderTracking[] : [];
       } catch (err) {
         console.error('Order tracking fetch error:', err);
         return [];
