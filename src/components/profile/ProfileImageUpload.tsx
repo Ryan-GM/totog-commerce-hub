@@ -54,16 +54,16 @@ const ProfileImageUpload = ({ currentImageUrl, userName }: ProfileImageUploadPro
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}_${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      let uploadResult = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
         });
 
-      if (uploadError) {
+      if (uploadResult.error) {
         // If bucket doesn't exist, create it
-        if (uploadError.message.includes('Bucket not found')) {
+        if (uploadResult.error.message.includes('Bucket not found')) {
           const { error: bucketError } = await supabase.storage.createBucket('avatars', {
             public: true,
             allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png'],
@@ -73,14 +73,13 @@ const ProfileImageUpload = ({ currentImageUrl, userName }: ProfileImageUploadPro
           if (bucketError) throw bucketError;
           
           // Retry upload
-          const { data: retryUpload, error: retryError } = await supabase.storage
+          uploadResult = await supabase.storage
             .from('avatars')
             .upload(fileName, file);
             
-          if (retryError) throw retryError;
-          uploadData = retryUpload;
+          if (uploadResult.error) throw uploadResult.error;
         } else {
-          throw uploadError;
+          throw uploadResult.error;
         }
       }
 

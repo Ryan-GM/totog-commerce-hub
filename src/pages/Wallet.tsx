@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet, useWalletTransactions } from '@/hooks/useWallet';
@@ -7,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Wallet, CreditCard, Plus, Download } from 'lucide-react';
+import { ArrowLeft, Wallet as WalletIcon, CreditCard, Plus, Download } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/utils/currency';
 
-const Wallet = () => {
+const WalletPage = () => {
   const navigate = useNavigate();
   const { data: wallet } = useWallet();
   const { data: transactions = [] } = useWalletTransactions();
@@ -42,20 +43,20 @@ const Wallet = () => {
 
   const getTransactionIcon = (type: string) => {
     const transactionIcons = {
-      deposit: { icon: <Plus className="h-4 w-4" />, color: 'bg-green-500' },
-      withdrawal: { icon: <Download className="h-4 w-4" />, color: 'bg-red-500' },
-      purchase: { icon: <CreditCard className="h-4 w-4" />, color: 'bg-blue-500' },
-      refund: { icon: <Plus className="h-4 w-4" />, color: 'bg-green-500' },
+      deposit: { icon: Plus, color: 'bg-green-500' },
+      withdrawal: { icon: Download, color: 'bg-red-500' },
+      purchase: { icon: CreditCard, color: 'bg-blue-500' },
+      refund: { icon: Plus, color: 'bg-green-500' },
     };
-    return transactionIcons[type as keyof typeof transactionIcons] || { icon: <CreditCard className="h-4 w-4" />, color: 'bg-gray-500' };
+    return transactionIcons[type as keyof typeof transactionIcons] || { icon: CreditCard, color: 'bg-gray-500' };
   };
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string): "default" | "destructive" | "outline" | "secondary" => {
     const statusVariants = {
-      pending: 'secondary',
-      completed: 'default',
-      failed: 'destructive',
-      cancelled: 'destructive',
+      pending: 'secondary' as const,
+      completed: 'default' as const,
+      failed: 'destructive' as const,
+      cancelled: 'destructive' as const,
     };
     return statusVariants[status as keyof typeof statusVariants] || 'secondary';
   };
@@ -84,7 +85,7 @@ const Wallet = () => {
           <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Wallet className="h-5 w-5 mr-2" />
+                <WalletIcon className="h-5 w-5 mr-2" />
                 Wallet Balance
               </CardTitle>
             </CardHeader>
@@ -122,36 +123,39 @@ const Wallet = () => {
             <CardContent>
               <div className="space-y-4">
                 {transactions.length > 0 ? (
-                  transactions.slice(0, 5).map((transaction, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTransactionIcon(transaction.type).color}`}>
-                          {getTransactionIcon(transaction.type).icon}
+                  transactions.slice(0, 5).map((transaction, index) => {
+                    const IconComponent = getTransactionIcon(transaction.type).icon;
+                    return (
+                      <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTransactionIcon(transaction.type).color}`}>
+                            <IconComponent className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {transaction.description || `${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)} Transaction`}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {new Date(transaction.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {transaction.description || `${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)} Transaction`}
+                        <div className="text-right">
+                          <p className={`font-semibold ${
+                            transaction.type === 'deposit' || transaction.type === 'refund' 
+                              ? 'text-green-600' 
+                              : 'text-red-600'
+                          }`}>
+                            {transaction.type === 'deposit' || transaction.type === 'refund' ? '+' : '-'}
+                            {formatCurrency(Math.abs(transaction.amount))}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(transaction.created_at).toLocaleDateString()}
-                          </p>
+                          <Badge variant={getStatusVariant(transaction.status)}>
+                            {transaction.status}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`font-semibold ${
-                          transaction.type === 'deposit' || transaction.type === 'refund' 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                        }`}>
-                          {transaction.type === 'deposit' || transaction.type === 'refund' ? '+' : '-'}
-                          {formatCurrency(Math.abs(transaction.amount))}
-                        </p>
-                        <Badge variant={getStatusVariant(transaction.status)}>
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8">
                     <CreditCard className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -244,4 +248,4 @@ const Wallet = () => {
   );
 };
 
-export default Wallet;
+export default WalletPage;
