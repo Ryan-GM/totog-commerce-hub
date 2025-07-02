@@ -23,26 +23,29 @@ export const useOrderTracking = (orderId?: string) => {
     queryFn: async () => {
       if (!user || !orderId) return [];
       
-      // Use raw SQL query since the table might not be in generated types yet
-      const { data, error } = await supabase.rpc('get_order_tracking', {
-        p_order_id: orderId,
-        p_user_id: user.id
-      });
-
-      if (error) {
-        // If RPC doesn't exist, fall back to direct query
-        console.log('RPC not found, using direct query');
-        const { data: directData, error: directError } = await supabase
+      console.log('Fetching order tracking for order:', orderId);
+      
+      // Since order_tracking table might not be in generated types yet, 
+      // we'll use a direct query with proper error handling
+      try {
+        const { data, error } = await supabase
           .from('order_tracking' as any)
           .select('*')
           .eq('order_id', orderId)
           .order('created_at', { ascending: true });
 
-        if (directError) throw directError;
-        return (directData || []) as OrderTracking[];
+        if (error) {
+          console.error('Order tracking query error:', error);
+          // Return empty array if table doesn't exist yet or other errors
+          return [];
+        }
+        
+        console.log('Order tracking data:', data);
+        return (data || []) as OrderTracking[];
+      } catch (err) {
+        console.error('Order tracking fetch error:', err);
+        return [];
       }
-      
-      return (data || []) as OrderTracking[];
     },
     enabled: !!user && !!orderId,
   });
