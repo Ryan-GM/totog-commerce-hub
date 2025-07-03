@@ -35,6 +35,8 @@ export const useProducts = (filters?: {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
+      console.log('Fetching products with filters:', filters);
+      
       let query = supabase
         .from('products')
         .select(`
@@ -44,29 +46,45 @@ export const useProducts = (filters?: {
         `)
         .eq('is_active', true);
 
+      // Apply category filter
       if (filters?.category && filters.category !== 'All') {
-        const { data: categoryData } = await supabase
+        console.log('Applying category filter:', filters.category);
+        
+        // First get the category ID
+        const { data: categoryData, error: categoryError } = await supabase
           .from('categories')
           .select('id')
           .eq('name', filters.category)
-          .single();
+          .maybeSingle();
         
-        if (categoryData) {
+        if (categoryError) {
+          console.error('Category filter error:', categoryError);
+        } else if (categoryData) {
           query = query.eq('category_id', categoryData.id);
+          console.log('Applied category filter for ID:', categoryData.id);
         }
       }
 
-      if (filters?.search) {
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      // Apply search filter
+      if (filters?.search && filters.search.trim()) {
+        console.log('Applying search filter:', filters.search);
+        const searchTerm = filters.search.trim();
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`);
       }
 
+      // Apply featured filter
       if (filters?.featured) {
         query = query.eq('is_featured', true);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Products query error:', error);
+        throw error;
+      }
+      
+      console.log('Products fetched:', data?.length || 0);
       return data as ProductWithRelations[];
     },
   });
@@ -85,7 +103,7 @@ export const useProduct = (id: string) => {
         `)
         .eq('id', id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data as ProductWithRelations;
@@ -97,12 +115,19 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
+      console.log('Fetching categories');
+      
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Categories query error:', error);
+        throw error;
+      }
+      
+      console.log('Categories fetched:', data?.length || 0);
       return data;
     },
   });

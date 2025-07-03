@@ -2,9 +2,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Laptop, Smartphone, Headphones, Camera, Watch, Gamepad2 } from 'lucide-react';
+import { useCategories } from '@/hooks/useProducts';
 
 const CategorySection = () => {
-  const categories = [
+  const { data: categories = [] } = useCategories();
+  
+  // Fallback categories with icons in case database categories don't have icons
+  const categoryIconMap = {
+    'Computers': Laptop,
+    'Mobile Phones': Smartphone,
+    'Smartphones': Smartphone,
+    'Audio': Headphones,
+    'Headphones': Headphones,
+    'Photography': Camera,
+    'Cameras': Camera,
+    'Wearables': Watch,
+    'Gaming': Gamepad2,
+    'Electronics': Laptop,
+  };
+
+  const defaultCategories = [
     {
       icon: Laptop,
       name: 'Computers',
@@ -43,6 +60,21 @@ const CategorySection = () => {
     },
   ];
 
+  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-orange-500', 'bg-indigo-500'];
+
+  // Use database categories if available, otherwise use default categories
+  const displayCategories = categories.length > 0 
+    ? categories.map((category, index) => {
+        const IconComponent = categoryIconMap[category.name as keyof typeof categoryIconMap] || Laptop;
+        return {
+          icon: IconComponent,
+          name: category.name,
+          count: 0, // We don't have product counts from the database yet
+          color: colors[index % colors.length],
+        };
+      })
+    : defaultCategories;
+
   return (
     <section id="categories" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -54,7 +86,7 @@ const CategorySection = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {categories.map((category, index) => {
+          {displayCategories.map((category, index) => {
             const Icon = category.icon;
             return (
               <Link 
@@ -69,7 +101,7 @@ const CategorySection = () => {
                   {category.name}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {category.count} products
+                  {category.count > 0 ? `${category.count} products` : 'Browse products'}
                 </p>
               </Link>
             );

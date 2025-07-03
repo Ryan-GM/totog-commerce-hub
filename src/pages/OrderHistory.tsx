@@ -68,39 +68,43 @@ const OrderHistory = () => {
     return (
       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
         <h4 className="font-medium text-gray-900 mb-3">Order Tracking</h4>
-        <div className="flex items-center justify-between">
-          {statuses.map((status, index) => {
-            const isCompleted = index <= currentStatusIndex;
-            const isCurrent = index === currentStatusIndex;
+        <div className="relative">
+          <div className="flex items-center justify-between relative">
+            {/* Progress line */}
+            <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-300 z-0" />
+            <div 
+              className="absolute top-4 left-0 h-0.5 bg-green-500 z-0 transition-all duration-300"
+              style={{ width: `${(currentStatusIndex / (statuses.length - 1)) * 100}%` }}
+            />
             
-            return (
-              <div key={status} className="flex flex-col items-center flex-1">
-                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  isCompleted 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : 'bg-white border-gray-300 text-gray-400'
-                }`}>
-                  {isCompleted ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <div className="w-2 h-2 bg-current rounded-full" />
-                  )}
-                </div>
-                <div className="mt-2 text-center">
-                  <p className={`text-xs font-medium ${
-                    isCurrent ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+            {statuses.map((status, index) => {
+              const isCompleted = index <= currentStatusIndex;
+              const isCurrent = index === currentStatusIndex;
+              
+              return (
+                <div key={status} className="flex flex-col items-center relative z-10">
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white ${
+                    isCompleted 
+                      ? 'border-green-500 text-green-500' 
+                      : 'border-gray-300 text-gray-400'
                   }`}>
-                    {getStatusLabel(status)}
-                  </p>
+                    {isCompleted ? (
+                      <CheckCircle className="h-4 w-4 fill-current" />
+                    ) : (
+                      <div className="w-2 h-2 bg-current rounded-full" />
+                    )}
+                  </div>
+                  <div className="mt-2 text-center">
+                    <p className={`text-xs font-medium ${
+                      isCurrent ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                    }`}>
+                      {getStatusLabel(status)}
+                    </p>
+                  </div>
                 </div>
-                {index < statuses.length - 1 && (
-                  <div className={`absolute h-0.5 w-full mt-4 ${
-                    isCompleted ? 'bg-green-500' : 'bg-gray-300'
-                  }`} style={{ left: '50%', width: 'calc(100% - 2rem)' }} />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     );
