@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Laptop, Smartphone, Headphones, Camera, Watch, Gamepad2 } from 'lucide-react';
+import { Laptop, Smartphone, Headphones, Camera, Watch, Gamepad2, ArrowRight } from 'lucide-react';
 import { useCategories } from '@/hooks/useProducts';
 
 const CategorySection = () => {
@@ -64,7 +64,7 @@ const CategorySection = () => {
 
   // Use database categories if available, otherwise use default categories
   const displayCategories = categories.length > 0 
-    ? categories.map((category, index) => {
+    ? categories.slice(0, 6).map((category, index) => {
         const IconComponent = categoryIconMap[category.name as keyof typeof categoryIconMap] || Laptop;
         return {
           icon: IconComponent,
@@ -106,6 +106,17 @@ const CategorySection = () => {
               </Link>
             );
           })}
+        </div>
+
+        {/* View All Categories Button */}
+        <div className="text-center mt-12">
+          <Link
+            to="/categories"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
+          >
+            View All Categories
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
