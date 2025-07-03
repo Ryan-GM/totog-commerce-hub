@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -7,7 +6,7 @@ import {
   Heart, Dumbbell, Car, Book, Baby, PawPrint,
   Wrench, Gift, Plane, TreePine, Sparkles, Glasses,
   Package, Monitor, Shield, Router, Download, Sofa,
-  Lightbulb, ChefHat, Bath, Leaf, Settings, Spray,
+  Lightbulb, ChefHat, Bath, Leaf, Settings, Droplets,
   Activity, Mountain, Pill, Zap, Music, Newspaper,
   Puzzle, Palette, Apple, Coffee, ShoppingCart, School,
   BrainCircuit, HardHat, TestTube, CreditCard, MapPin
@@ -43,7 +42,7 @@ const Categories = () => {
     'Bedding & Bath': Bath,
     'Garden & Outdoor': TreePine,
     'Home Improvement': Hammer,
-    'Cleaning & Laundry': Spray,
+    'Cleaning & Laundry': Droplets,
     'Health & Wellness': Activity,
     'Sports & Fitness': Dumbbell,
     'Outdoor Recreation': Mountain,
