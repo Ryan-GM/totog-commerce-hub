@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Extended Product type with joined data
+// Extended Product type with joined data and new features
 export interface ProductWithRelations {
   id: string;
   name: string;
@@ -23,15 +23,49 @@ export interface ProductWithRelations {
   dimensions: Record<string, any> | null;
   created_at: string;
   updated_at: string;
-  categories: { name: string } | null;
-  brands: { name: string } | null;
+  categories: { name: string; description: string | null } | null;
+  brands: { name: string; description: string | null } | null;
+  average_rating?: number;
+  review_count?: number;
+  variants?: ProductVariant[];
 }
 
-export const useProducts = (filters?: {
+export interface ProductVariant {
+  id: string;
+  variant_type: string;
+  variant_value: string;
+  price_adjustment: number;
+  stock_quantity: number;
+  sku_suffix: string | null;
+  is_active: boolean;
+}
+
+export interface ProductReview {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  verified_purchase: boolean;
+  helpful_count: number;
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductFilters {
   category?: string;
+  brand?: string;
   search?: string;
   featured?: boolean;
-}) => {
+  minPrice?: number;
+  maxPrice?: number;
+  rating?: number;
+  inStock?: boolean;
+}
+
+export const useProducts = (filters?: ProductFilters) => {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
@@ -41,8 +75,8 @@ export const useProducts = (filters?: {
         .from('products')
         .select(`
           *,
-          categories:category_id(name),
-          brands:brand_id(name)
+          categories:category_id(name, description),
+          brands:brand_id(name, description)
         `)
         .eq('is_active', true);
 
@@ -50,7 +84,6 @@ export const useProducts = (filters?: {
       if (filters?.category && filters.category !== 'All') {
         console.log('Applying category filter:', filters.category);
         
-        // First get the category ID
         const { data: categoryData, error: categoryError } = await supabase
           .from('categories')
           .select('id')
@@ -62,6 +95,24 @@ export const useProducts = (filters?: {
         } else if (categoryData) {
           query = query.eq('category_id', categoryData.id);
           console.log('Applied category filter for ID:', categoryData.id);
+        }
+      }
+
+      // Apply brand filter
+      if (filters?.brand && filters.brand !== 'All') {
+        console.log('Applying brand filter:', filters.brand);
+        
+        const { data: brandData, error: brandError } = await supabase
+          .from('brands')
+          .select('id')
+          .eq('name', filters.brand)
+          .maybeSingle();
+        
+        if (brandError) {
+          console.error('Brand filter error:', brandError);
+        } else if (brandData) {
+          query = query.eq('brand_id', brandData.id);
+          console.log('Applied brand filter for ID:', brandData.id);
         }
       }
 
@@ -77,6 +128,19 @@ export const useProducts = (filters?: {
         query = query.eq('is_featured', true);
       }
 
+      // Apply price filters
+      if (filters?.minPrice !== undefined) {
+        query = query.gte('price', filters.minPrice);
+      }
+      if (filters?.maxPrice !== undefined) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      // Apply stock filter
+      if (filters?.inStock) {
+        query = query.gt('stock_quantity', 0);
+      }
+
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
@@ -85,7 +149,26 @@ export const useProducts = (filters?: {
       }
       
       console.log('Products fetched:', data?.length || 0);
-      return data as ProductWithRelations[];
+      
+      // Enhance products with ratings and review counts
+      const enhancedProducts = await Promise.all(
+        (data || []).map(async (product) => {
+          // Get average rating and review count
+          const { data: ratingData } = await supabase
+            .rpc('get_product_average_rating', { product_uuid: product.id });
+          
+          const { data: reviewCountData } = await supabase
+            .rpc('get_product_review_count', { product_uuid: product.id });
+
+          return {
+            ...product,
+            average_rating: ratingData || 0,
+            review_count: reviewCountData || 0,
+          } as ProductWithRelations;
+        })
+      );
+
+      return enhancedProducts;
     },
   });
 };
@@ -98,16 +181,56 @@ export const useProduct = (id: string) => {
         .from('products')
         .select(`
           *,
-          categories:category_id(name),
-          brands:brand_id(name)
+          categories:category_id(name, description),
+          brands:brand_id(name, description)
         `)
         .eq('id', id)
         .eq('is_active', true)
         .maybeSingle();
 
       if (error) throw error;
-      return data as ProductWithRelations;
+      if (!data) return null;
+
+      // Get product variants
+      const { data: variantsData } = await supabase
+        .from('product_variants')
+        .select('*')
+        .eq('product_id', id)
+        .eq('is_active', true);
+
+      // Get average rating and review count
+      const { data: ratingData } = await supabase
+        .rpc('get_product_average_rating', { product_uuid: id });
+      
+      const { data: reviewCountData } = await supabase
+        .rpc('get_product_review_count', { product_uuid: id });
+
+      return {
+        ...data,
+        variants: variantsData || [],
+        average_rating: ratingData || 0,
+        review_count: reviewCountData || 0,
+      } as ProductWithRelations;
     },
+    enabled: !!id,
+  });
+};
+
+export const useProductReviews = (productId: string) => {
+  return useQuery({
+    queryKey: ['product-reviews', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as ProductReview[];
+    },
+    enabled: !!productId,
   });
 };
 
@@ -145,5 +268,89 @@ export const useBrands = () => {
       if (error) throw error;
       return data;
     },
+  });
+};
+
+export const useFeaturedProducts = (limit: number = 8) => {
+  return useQuery({
+    queryKey: ['featured-products', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories:category_id(name, description),
+          brands:brand_id(name, description)
+        `)
+        .eq('is_active', true)
+        .eq('is_featured', true)
+        .limit(limit)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Enhance with ratings
+      const enhancedProducts = await Promise.all(
+        (data || []).map(async (product) => {
+          const { data: ratingData } = await supabase
+            .rpc('get_product_average_rating', { product_uuid: product.id });
+          
+          const { data: reviewCountData } = await supabase
+            .rpc('get_product_review_count', { product_uuid: product.id });
+
+          return {
+            ...product,
+            average_rating: ratingData || 0,
+            review_count: reviewCountData || 0,
+          } as ProductWithRelations;
+        })
+      );
+
+      return enhancedProducts;
+    },
+  });
+};
+
+export const useSimilarProducts = (productId: string, categoryId?: string, limit: number = 4) => {
+  return useQuery({
+    queryKey: ['similar-products', productId, categoryId, limit],
+    queryFn: async () => {
+      if (!categoryId) return [];
+
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories:category_id(name, description),
+          brands:brand_id(name, description)
+        `)
+        .eq('is_active', true)
+        .eq('category_id', categoryId)
+        .neq('id', productId)
+        .limit(limit)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Enhance with ratings
+      const enhancedProducts = await Promise.all(
+        (data || []).map(async (product) => {
+          const { data: ratingData } = await supabase
+            .rpc('get_product_average_rating', { product_uuid: product.id });
+          
+          const { data: reviewCountData } = await supabase
+            .rpc('get_product_review_count', { product_uuid: product.id });
+
+          return {
+            ...product,
+            average_rating: ratingData || 0,
+            review_count: reviewCountData || 0,
+          } as ProductWithRelations;
+        })
+      );
+
+      return enhancedProducts;
+    },
+    enabled: !!categoryId,
   });
 };

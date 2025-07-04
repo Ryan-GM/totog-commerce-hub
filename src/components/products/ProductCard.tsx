@@ -13,9 +13,11 @@ interface ProductCardProps {
   price: number;
   originalPrice?: number;
   image: string;
-  rating: number;
-  reviews: number;
+  rating?: number;
+  reviews?: number;
   inStock: boolean;
+  brand?: string;
+  category?: string;
 }
 
 const ProductCard = ({ 
@@ -24,9 +26,11 @@ const ProductCard = ({
   price, 
   originalPrice, 
   image, 
-  rating, 
-  reviews, 
-  inStock 
+  rating = 0, 
+  reviews = 0, 
+  inStock,
+  brand,
+  category
 }: ProductCardProps) => {
   const { addItem } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -65,6 +69,16 @@ const ProductCard = ({
     }
   };
 
+  // Format price in KES
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
       {/* Image Container */}
@@ -81,7 +95,7 @@ const ProductCard = ({
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {discount > 0 && (
             <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-              -{discount}%
+              -{discount}% OFF
             </span>
           )}
           {!inStock && (
@@ -118,6 +132,15 @@ const ProductCard = ({
 
       {/* Product Info */}
       <div className="p-4 space-y-3">
+        {/* Brand & Category */}
+        {(brand || category) && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            {brand && <span className="font-medium">{brand}</span>}
+            {brand && category && <span>•</span>}
+            {category && <span>{category}</span>}
+          </div>
+        )}
+
         <Link to={`/product/${id}`}>
           <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
             {name}
@@ -138,17 +161,19 @@ const ProductCard = ({
               />
             ))}
           </div>
-          <span className="text-sm text-gray-600">({reviews})</span>
+          <span className="text-sm text-gray-600">
+            {rating > 0 ? `${rating.toFixed(1)}` : '0.0'} ({reviews})
+          </span>
         </div>
 
         {/* Price */}
         <div className="flex items-center space-x-2">
           <span className="text-lg font-bold text-gray-900">
-            Ksh {price.toLocaleString()}
+            {formatPrice(price)}
           </span>
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              Ksh {originalPrice.toLocaleString()}
+              {formatPrice(originalPrice)}
             </span>
           )}
         </div>
@@ -158,8 +183,13 @@ const ProductCard = ({
           <span className={`text-xs font-medium ${
             inStock ? 'text-green-600' : 'text-red-600'
           }`}>
-            {inStock ? 'In Stock' : 'Out of Stock'}
+            {inStock ? '✓ In Stock' : '✗ Out of Stock'}
           </span>
+          {inStock && (
+            <span className="text-xs text-gray-500">
+              Available now
+            </span>
+          )}
         </div>
       </div>
     </div>
