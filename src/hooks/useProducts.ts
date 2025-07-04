@@ -180,19 +180,8 @@ export const useProduct = (id: string) => {
       if (error) throw error;
       if (!data) return null;
 
-      // Try to get product variants using raw SQL since the table might not be in types yet
-      let variantsData: ProductVariant[] = [];
-      try {
-        const { data: variants } = await supabase
-          .rpc('generate_order_number') // This is a workaround - we'll use raw queries
-          .then(() => null)
-          .catch(() => null);
-        
-        // For now, return empty variants until the table is properly typed
-        variantsData = [];
-      } catch (e) {
-        console.log('Variants not available yet');
-      }
+      // For now, return empty variants until the table is properly typed
+      const variantsData: ProductVariant[] = [];
 
       return {
         ...data,
@@ -210,13 +199,7 @@ export const useProductReviews = (productId: string) => {
     queryKey: ['product-reviews', productId],
     queryFn: async () => {
       // For now, return empty array until the table is properly typed
-      try {
-        // This is a placeholder until the product_reviews table is in the types
-        return [] as ProductReview[];
-      } catch (error) {
-        console.error('Reviews not available yet:', error);
-        return [] as ProductReview[];
-      }
+      return [] as ProductReview[];
     },
     enabled: !!productId,
   });
