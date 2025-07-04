@@ -1,6 +1,15 @@
 
 import React, { useState } from 'react';
-import { ProductVariant } from '@/hooks/useProducts';
+
+export interface ProductVariant {
+  id: string;
+  variant_type: string;
+  variant_value: string;
+  price_adjustment: number;
+  stock_quantity: number;
+  sku_suffix: string | null;
+  is_active: boolean;
+}
 
 interface ProductVariantsProps {
   variants: ProductVariant[];
