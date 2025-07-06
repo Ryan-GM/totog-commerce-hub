@@ -17,6 +17,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Wishlist from "./pages/Wishlist";
 import AccountSettings from "./pages/AccountSettings";
 import Wallet from "./pages/Wallet";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/wallet" element={<Wallet />} />
