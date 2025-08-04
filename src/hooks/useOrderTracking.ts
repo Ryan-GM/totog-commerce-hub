@@ -8,11 +8,12 @@ import { z } from 'zod';
 const OrderTrackingSchema = z.object({
   id: z.string(),
   order_id: z.string(),
-  status: z.enum(['order_placed', 'processing', 'out_for_delivery', 'delivered', 'cancelled']),
+  status: z.enum(['order_placed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled']),
   status_message: z.string().nullable(),
   tracking_number: z.string().nullable(),
   estimated_delivery: z.string().nullable(),
   actual_delivery: z.string().nullable(),
+  location: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -29,52 +30,30 @@ export const useOrderTracking = (orderId?: string) => {
       
       console.log('Fetching order tracking for order:', orderId);
       
-      try {
-        // Use a simple query without type assertion initially
-        const { data, error } = await supabase
-          .from('orders' as any) // Use existing table as fallback
-          .select('*')
-          .eq('id', orderId)
-          .limit(0); // Don't actually fetch data since table doesn't exist
+      const { data, error } = await supabase
+        .from('order_tracking')
+        .select(`
+          id,
+          order_id,
+          status,
+          status_message,
+          tracking_number,
+          estimated_delivery,
+          actual_delivery,
+          location,
+          created_at,
+          updated_at
+        `)
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true });
 
-        if (error) {
-          console.log('Order tracking table not found, returning mock data for development');
-          // Return mock tracking data for development purposes
-          return [
-            {
-              id: '1',
-              order_id: orderId,
-              status: 'order_placed' as const,
-              status_message: 'Order has been placed successfully',
-              tracking_number: null,
-              estimated_delivery: null,
-              actual_delivery: null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }
-          ] as OrderTracking[];
-        }
-        
-        // Since the table doesn't exist yet, return empty array
-        console.log('Order tracking data:', []);
-        return [];
-      } catch (err) {
-        console.error('Order tracking fetch error:', err);
-        // Return mock data for development
-        return [
-          {
-            id: '1',
-            order_id: orderId,
-            status: 'order_placed' as const,
-            status_message: 'Order has been placed successfully',
-            tracking_number: null,
-            estimated_delivery: null,
-            actual_delivery: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ] as OrderTracking[];
+      if (error) {
+        console.error('Error fetching order tracking:', error);
+        throw error;
       }
+
+      console.log('Order tracking data:', data);
+      return data as OrderTracking[];
     },
     enabled: !!user && !!orderId,
   });
@@ -84,6 +63,7 @@ export const getStatusLabel = (status: string): string => {
   const statusLabels = {
     order_placed: 'Order Placed',
     processing: 'Processing',
+    shipped: 'Shipped',
     out_for_delivery: 'Out for Delivery',
     delivered: 'Delivered',
     cancelled: 'Cancelled'

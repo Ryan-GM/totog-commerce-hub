@@ -22,6 +22,7 @@ import Wishlist from "./pages/Wishlist";
 import AccountSettings from "./pages/AccountSettings";
 import Wallet from "./pages/Wallet";
 import OrderHistory from "./pages/OrderHistory";
+import { OrderTracking } from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
