@@ -8,11 +8,16 @@ import { Label } from '@/components/ui/label';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreateOrder, useUpdateOrderStatus } from '@/hooks/useOrders';
 import { toast } from '@/hooks/use-toast';
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, total, clearCart } = useCart();
+  const createOrder = useCreateOrder();
+  const updateOrderStatus = useUpdateOrderStatus();
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -45,6 +50,17 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You must be logged in to place an order.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
     setIsProcessing(true);
 
     // Validate required fields
@@ -76,33 +92,62 @@ const Checkout = () => {
       }
     }
 
-    // Simulate payment processing
     try {
+      // Calculate totals
+      const subtotal = total;
+      const taxAmount = total * 0.08;
+      const finalTotal = subtotal + taxAmount;
+
+      // Create order in database
+      const orderData = {
+        items: items.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
+        total_amount: finalTotal,
+        subtotal: subtotal,
+        tax_amount: taxAmount,
+        shipping_amount: 0,
+        billing_address: billingInfo,
+        shipping_address: billingInfo, // Using billing as shipping for now
+        payment_method: paymentMethod,
+        notes: null,
+      };
+
+      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Create the order
+      const order = await createOrder.mutateAsync(orderData);
+
+      // Update order status to paid after successful payment simulation
+      await updateOrderStatus.mutateAsync({
+        orderId: order.id,
+        status: 'processing',
+        paymentStatus: 'paid'
+      });
 
       // Clear cart and redirect to success page
       clearCart();
       
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order has been confirmed. Order total: $${total.toFixed(2)}`,
-      });
-
       navigate('/order-confirmation', { 
         state: { 
           orderDetails: {
             items,
-            total,
+            total: finalTotal,
             billingInfo,
             paymentMethod,
-            orderId: `ORD-${Date.now()}`
+            orderId: order.order_number,
+            orderDbId: order.id
           }
         }
       });
     } catch (error) {
+      console.error('Order creation failed:', error);
       toast({
-        title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
+        title: "Order Failed",
+        description: "There was an error processing your order. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -125,8 +125,23 @@ const OrderConfirmation = () => {
               Continue Shopping
             </Button>
             <Button 
+              onClick={() => navigate('/order-history')}
+              variant="outline"
+              className="border-green-600 text-green-600 hover:bg-green-50"
+            >
+              View My Orders
+            </Button>
+            {orderDetails.orderDbId && (
+              <Button 
+                onClick={() => navigate(`/order-tracking/${orderDetails.orderDbId}`)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Track Order
+              </Button>
+            )}
+            <Button 
               onClick={() => navigate('/')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gray-600 hover:bg-gray-700 text-white"
             >
               Return Home
             </Button>

@@ -44,7 +44,6 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -53,6 +52,7 @@ const App = () => (
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/wallet" element={<Wallet />} />
                 <Route path="/order-history" element={<OrderHistory />} />
+                <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

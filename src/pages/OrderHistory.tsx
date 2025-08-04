@@ -4,38 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Package, Download, Eye, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useOrderTracking, getStatusLabel } from '@/hooks/useOrderTracking';
+import { useOrders } from '@/hooks/useOrders';
+import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
 import { formatCurrency } from '@/utils/currency';
 
 const OrderHistory = () => {
   const navigate = useNavigate();
-
-  // Mock data - in real app, this would come from useQuery
-  const orders = [
-    {
-      id: '1',
-      order_number: 'ORD-20241201-0001',
-      status: 'delivered',
-      total_amount: 2999.00,
-      created_at: '2024-12-01T10:00:00Z',
-      items: [
-        { name: 'Premium Headphones', quantity: 1, price: 2999.00 }
-      ]
-    },
-    {
-      id: '2',
-      order_number: 'ORD-20241128-0002',
-      status: 'out_for_delivery',
-      total_amount: 1499.00,
-      created_at: '2024-11-28T15:30:00Z',
-      items: [
-        { name: 'Wireless Mouse', quantity: 2, price: 749.50 }
-      ]
-    }
-  ];
+  const { data: orders = [], isLoading, error } = useOrders();
+  const { generateInvoice } = useInvoiceGenerator();
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -110,6 +91,46 @@ const OrderHistory = () => {
     );
   };
 
+  const handleDownloadInvoice = (order: any) => {
+    generateInvoice({ order, items: order.order_items });
+  };
+
+  const handleViewOrderDetail = (orderId: string) => {
+    navigate(`/order-tracking/${orderId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Orders</h1>
+            <p className="text-gray-600 mb-6">There was an error loading your order history. Please try again.</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -152,13 +173,13 @@ const OrderHistory = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    {order.order_items?.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                          <p className="font-medium">{item.name}</p>
+                          <p className="font-medium">{item.products?.name || 'Product'}</p>
                           <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="font-medium">{formatCurrency(item.price)}</p>
+                        <p className="font-medium">{formatCurrency(item.total_price)}</p>
                       </div>
                     ))}
                   </div>
@@ -166,20 +187,30 @@ const OrderHistory = () => {
                   <OrderTrackingTimeline orderId={order.id} />
                   
                   <div className="flex items-center space-x-3 mt-4 pt-4 border-t">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewOrderDetail(order.id)}
+                    >
                       <Eye className="h-4 w-4 mr-2" />
                       View Details
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownloadInvoice(order)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download Invoice
                     </Button>
-                    {order.status === 'out_for_delivery' && (
-                      <Button variant="outline" size="sm">
-                        <Truck className="h-4 w-4 mr-2" />
-                        Track Order
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/order-tracking/${order.id}`)}
+                    >
+                      <Truck className="h-4 w-4 mr-2" />
+                      Track Order
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
