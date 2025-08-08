@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star } from 'lucide-react';
 import {
@@ -80,12 +81,14 @@ const HeroSection = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-6">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg group px-8 py-4 text-lg">
-                Shop Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Button asChild size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground shadow-lg group px-8 py-4 text-lg">
+                <Link to="/products" aria-label="Shop products now">
+                  Shop Now
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg">
-                View Categories
+              <Button asChild size="lg" variant="outline" className="border-2 border-input text-foreground hover:bg-accent px-8 py-4 text-lg">
+                <Link to="/categories" aria-label="Browse product categories">View Categories</Link>
               </Button>
             </div>
 

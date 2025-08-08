@@ -18,11 +18,16 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">T</span>
-          </div>
-          <span className="font-bold text-xl hidden sm:block">TotoG Commerce</span>
+        <Link to="/" className="group flex items-center space-x-2">
+          <img
+            src="/lovable-uploads/09074343-4664-4e45-bb61-1ac678197803.png"
+            alt="TotoG Commerce logo"
+            className="w-9 h-9 rounded-md object-contain"
+            loading="lazy"
+          />
+          <span className="font-extrabold text-xl hidden sm:block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-float transition-all duration-300 group-hover:tracking-wide">
+            TotoG Commerce
+          </span>
         </Link>
 
         {/* Search Bar */}
