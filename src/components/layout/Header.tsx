@@ -25,7 +25,7 @@ const Header = () => {
             className="w-9 h-9 rounded-md object-contain"
             loading="lazy"
           />
-          <span className="font-extrabold text-xl hidden sm:block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-float transition-all duration-300 group-hover:tracking-wide">
+          <span className="font-brand font-extrabold text-xl hidden sm:block text-foreground animate-float transition-all duration-300 group-hover:tracking-wide">
             TotoG Commerce
           </span>
         </Link>
