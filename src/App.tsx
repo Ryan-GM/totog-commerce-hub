@@ -24,6 +24,10 @@ import Wallet from "./pages/Wallet";
 import OrderHistory from "./pages/OrderHistory";
 import { OrderTracking } from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import DashboardProducts from "./pages/DashboardProducts";
+import DashboardCategories from "./pages/DashboardCategories";
+import DashboardBrands from "./pages/DashboardBrands";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +57,10 @@ const App = () => (
                 <Route path="/wallet" element={<Wallet />} />
                 <Route path="/order-history" element={<OrderHistory />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/products" element={<DashboardProducts />} />
+                <Route path="/dashboard/categories" element={<DashboardCategories />} />
+                <Route path="/dashboard/brands" element={<DashboardBrands />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
