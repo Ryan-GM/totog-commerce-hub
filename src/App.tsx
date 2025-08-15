@@ -28,10 +28,6 @@ import Dashboard from "./pages/Dashboard";
 import DashboardProducts from "./pages/DashboardProducts";
 import DashboardCategories from "./pages/DashboardCategories";
 import DashboardBrands from "./pages/DashboardBrands";
-import DashboardOrders from "./pages/DashboardOrders";
-import DashboardAnalytics from "./pages/DashboardAnalytics";
-import DashboardUsers from "./pages/DashboardUsers";
-import DashboardSettings from "./pages/DashboardSettings";
 
 const queryClient = new QueryClient();
 
@@ -65,10 +61,6 @@ const App = () => (
                 <Route path="/dashboard/products" element={<DashboardProducts />} />
                 <Route path="/dashboard/categories" element={<DashboardCategories />} />
                 <Route path="/dashboard/brands" element={<DashboardBrands />} />
-                <Route path="/dashboard/orders" element={<DashboardOrders />} />
-                <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
-                <Route path="/dashboard/users" element={<DashboardUsers />} />
-                <Route path="/dashboard/settings" element={<DashboardSettings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

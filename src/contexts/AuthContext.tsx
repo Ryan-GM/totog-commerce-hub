@@ -50,10 +50,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    // Get the current URL origin for redirect
     const redirectUrl = `${window.location.origin}/`;
     
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -66,17 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (!error) {
-      if (data.user && !data.user.email_confirmed_at) {
-        toast({
-          title: "Check your email!",
-          description: "We've sent you a confirmation link to verify your account.",
-        });
-      } else {
-        toast({
-          title: "Account created successfully!",
-          description: "You can now sign in to your account.",
-        });
-      }
+      toast({
+        title: "Account created successfully!",
+        description: "Please check your email to verify your account.",
+      });
     }
 
     return { error };
