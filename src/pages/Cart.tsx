@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
+  const { formatCurrency } = useCurrency();
 
   if (items.length === 0) {
     return (
@@ -84,7 +86,7 @@ const Cart = () => {
                           </h3>
                         </Link>
                         <p className="text-lg font-bold text-gray-900 mt-1">
-                          ${item.price.toFixed(2)}
+                          {formatCurrency(item.price)}
                         </p>
                       </div>
 
@@ -135,7 +137,7 @@ const Cart = () => {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal ({items.length} items)</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
@@ -143,12 +145,12 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Estimated Tax</span>
-                  <span>${(total * 0.08).toFixed(2)}</span>
+                  <span>{formatCurrency(total * 0.08)}</span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
                     <span>Total</span>
-                    <span>${(total * 1.08).toFixed(2)}</span>
+                    <span>{formatCurrency(total * 1.08)}</span>
                   </div>
                 </div>
               </div>
@@ -169,7 +171,7 @@ const Cart = () => {
               </div>
 
               <div className="mt-6 text-sm text-gray-600 space-y-2">
-                <p>• Free shipping on orders over $50</p>
+                <p>• Free shipping on orders over KES 5,000</p>
                 <p>• 30-day return policy</p>
                 <p>• Secure checkout</p>
               </div>

@@ -9,12 +9,14 @@ import ProductCard from '@/components/products/ProductCard';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from '@/hooks/use-toast';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
   const { addToWishlist } = useWishlist();
+  const { formatCurrency } = useCurrency();
   
   const { data: product, isLoading: productLoading } = useProduct(id || '');
   const { data: similarProducts = [] } = useProducts({ 
@@ -122,11 +124,11 @@ const ProductDetail = () => {
             {/* Price */}
             <div className="flex items-center space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                Ksh {Number(product.price).toLocaleString()}
+                {formatCurrency(Number(product.price))}
               </span>
               {product.original_price && (
                 <span className="text-xl text-gray-500 line-through">
-                  Ksh {Number(product.original_price).toLocaleString()}
+                  {formatCurrency(Number(product.original_price))}
                 </span>
               )}
             </div>

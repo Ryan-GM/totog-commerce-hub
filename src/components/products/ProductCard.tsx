@@ -5,6 +5,7 @@ import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
@@ -34,6 +35,7 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addItem } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatCurrency } = useCurrency();
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
   const isWishlisted = isInWishlist(id);
 
@@ -69,15 +71,6 @@ const ProductCard = ({
     }
   };
 
-  // Format price in KES
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
@@ -169,11 +162,11 @@ const ProductCard = ({
         {/* Price */}
         <div className="flex items-center space-x-2">
           <span className="text-lg font-bold text-gray-900">
-            {formatPrice(price)}
+            {formatCurrency(price)}
           </span>
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              {formatPrice(originalPrice)}
+              {formatCurrency(originalPrice)}
             </span>
           )}
         </div>

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
@@ -38,8 +39,9 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
+      <CurrencyProvider>
+        <WishlistProvider>
+          <CartProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -73,8 +75,9 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
-        </CartProvider>
-      </WishlistProvider>
+          </CartProvider>
+        </WishlistProvider>
+      </CurrencyProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

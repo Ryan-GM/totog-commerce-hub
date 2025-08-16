@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { CurrencySelector } from '@/components/ui/currency-selector';
 import ProfileDropdown from './ProfileDropdown';
 
 const Header = () => {
@@ -44,6 +45,9 @@ const Header = () => {
 
         {/* Navigation Icons */}
         <div className="flex items-center space-x-4">
+          {/* Currency Selector */}
+          <CurrencySelector />
+
           {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
