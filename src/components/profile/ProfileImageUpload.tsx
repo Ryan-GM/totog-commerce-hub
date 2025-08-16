@@ -50,37 +50,19 @@ const ProfileImageUpload = ({ currentImageUrl, userName }: ProfileImageUploadPro
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
 
-      // Upload to Supabase storage
+      // Upload to Supabase storage with user folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
-      let uploadResult = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true // Allow overwriting existing files
         });
 
-      if (uploadResult.error) {
-        // If bucket doesn't exist, create it
-        if (uploadResult.error.message.includes('Bucket not found')) {
-          const { error: bucketError } = await supabase.storage.createBucket('avatars', {
-            public: true,
-            allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png'],
-            fileSizeLimit: 2097152 // 2MB
-          });
-          
-          if (bucketError) throw bucketError;
-          
-          // Retry upload
-          uploadResult = await supabase.storage
-            .from('avatars')
-            .upload(fileName, file);
-            
-          if (uploadResult.error) throw uploadResult.error;
-        } else {
-          throw uploadResult.error;
-        }
+      if (error) {
+        throw error;
       }
 
       // Get public URL
