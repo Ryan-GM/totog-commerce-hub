@@ -11,12 +11,13 @@ import Footer from '@/components/layout/Footer';
 import { useOrderTracking, getStatusLabel } from '@/hooks/useOrderTracking';
 import { useOrders } from '@/hooks/useOrders';
 import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
-import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const OrderHistory = () => {
   const navigate = useNavigate();
   const { data: orders = [], isLoading, error } = useOrders();
   const { generateInvoice } = useInvoiceGenerator();
+  const { formatCurrency } = useCurrency();
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {

@@ -5,10 +5,12 @@ import { CheckCircle, Package, Truck, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const orderDetails = location.state?.orderDetails;
 
   if (!orderDetails) {
@@ -61,7 +63,7 @@ const OrderConfirmation = () => {
                     <h3 className="font-medium text-gray-900">{item.name}</h3>
                     <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                   </div>
-                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
@@ -69,7 +71,7 @@ const OrderConfirmation = () => {
             <div className="border-t pt-4 mt-4">
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total (including tax):</span>
-                <span>${(total * 1.08).toFixed(2)}</span>
+                <span>{formatCurrency(total * 1.08)}</span>
               </div>
             </div>
           </div>
