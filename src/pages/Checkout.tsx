@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, Shield, ArrowLeft } from 'lucide-react';
+import { CreditCard, Truck, Shield, ArrowLeft, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCreateOrder, useUpdateOrderStatus } from '@/hooks/useOrders';
 import { toast } from '@/hooks/use-toast';
 
@@ -16,10 +17,12 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, total, clearCart } = useCart();
+  const { formatCurrency } = useCurrency();
   const createOrder = useCreateOrder();
   const updateOrderStatus = useUpdateOrderStatus();
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mpesaPhone, setMpesaPhone] = useState('');
 
   const [billingInfo, setBillingInfo] = useState({
     firstName: '',
@@ -90,6 +93,14 @@ const Checkout = () => {
         setIsProcessing(false);
         return;
       }
+    } else if (paymentMethod === 'mpesa' && !mpesaPhone) {
+      toast({
+        title: "Missing M-PESA Phone",
+        description: "Please enter your M-PESA registered phone number.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
     }
 
     try {
@@ -116,6 +127,14 @@ const Checkout = () => {
       };
 
       // Simulate payment processing
+      toast({
+        title: "Processing Payment",
+        description: paymentMethod === 'mpesa' 
+          ? "Check your phone for M-PESA prompt..." 
+          : paymentMethod === 'paypal' 
+          ? "Redirecting to PayPal..." 
+          : "Processing card payment...",
+      });
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Create the order
@@ -381,8 +400,30 @@ const Checkout = () => {
               )}
 
               {paymentMethod === 'mpesa' && (
-                <div className="border-t pt-6">
-                  <p className="text-gray-600">You will receive an M-PESA prompt on your phone to complete the payment.</p>
+                <div className="border-t pt-6 space-y-4">
+                  <div>
+                    <Label htmlFor="mpesaPhone">M-PESA Phone Number *</Label>
+                    <Input
+                      id="mpesaPhone"
+                      type="tel"
+                      placeholder="+254 7XX XXX XXX"
+                      value={mpesaPhone}
+                      onChange={(e) => setMpesaPhone(e.target.value)}
+                      required
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Enter the phone number registered with M-PESA
+                    </p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg text-sm text-green-700">
+                    <p className="font-semibold mb-2">How M-PESA payment works:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Click "Place Order" to initiate payment</li>
+                      <li>You'll receive an STK push on your phone</li>
+                      <li>Enter your M-PESA PIN to complete payment</li>
+                      <li>Wait for confirmation (usually within 30 seconds)</li>
+                    </ol>
+                  </div>
                 </div>
               )}
             </div>
@@ -405,7 +446,7 @@ const Checkout = () => {
                       <h3 className="font-medium text-gray-900">{item.name}</h3>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
-                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -413,7 +454,7 @@ const Checkout = () => {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
@@ -421,11 +462,11 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Tax</span>
-                  <span>${(total * 0.08).toFixed(2)}</span>
+                  <span>{formatCurrency(total * 0.08)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold text-gray-900 border-t pt-2">
                   <span>Total</span>
-                  <span>${(total * 1.08).toFixed(2)}</span>
+                  <span>{formatCurrency(total * 1.08)}</span>
                 </div>
               </div>
 
@@ -434,7 +475,7 @@ const Checkout = () => {
                 disabled={isProcessing}
                 className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3"
               >
-                {isProcessing ? 'Processing...' : `Place Order - $${(total * 1.08).toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Place Order - ${formatCurrency(total * 1.08)}`}
               </Button>
 
               <div className="mt-6 space-y-3 text-sm text-gray-600">

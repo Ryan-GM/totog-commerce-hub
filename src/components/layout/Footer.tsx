@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import ContactModal from '@/components/modals/ContactModal';
+import AboutModal from '@/components/modals/AboutModal';
+
 const Footer = () => {
-  return <footer className="bg-gray-900 text-white">
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenContact = () => setIsContactOpen(true);
+    window.addEventListener('openContactModal', handleOpenContact);
+    return () => window.removeEventListener('openContactModal', handleOpenContact);
+  }, []);
+
+  return (
+    <>
+      <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -21,10 +35,24 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-lg font-semibold">Quick Links</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Products</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Contact</a></li>
+              <li><a href="/" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
+              <li><a href="/products" className="text-gray-300 hover:text-white transition-colors">Products</a></li>
+              <li>
+                <button 
+                  onClick={() => setIsAboutOpen(true)}
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  About Us
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => setIsContactOpen(true)}
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  Contact
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -45,11 +73,11 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-blue-400" />
-                <span className="text-gray-300">info@totog.com</span>
+                <span className="text-gray-300">support@totog-commerce.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-blue-400" />
-                <span className="text-gray-300">+254 722372811</span>
+                <span className="text-gray-300">+254 722 372 811</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-blue-400" />
@@ -65,6 +93,13 @@ const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>;
+    </footer>
+
+      {/* Modals */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+    </>
+  );
 };
+
 export default Footer;
