@@ -89,10 +89,11 @@ export const useAdminUpdateOrderStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ orderId, status, paymentStatus }: { 
+    mutationFn: async ({ orderId, status, paymentStatus, trackingNumber }: { 
       orderId: string; 
       status?: string; 
-      paymentStatus?: string; 
+      paymentStatus?: string;
+      trackingNumber?: string;
     }) => {
       const updateData: any = {};
       if (status) updateData.status = status;
@@ -106,10 +107,33 @@ export const useAdminUpdateOrderStatus = () => {
         .single();
 
       if (error) throw error;
+
+      // If status changed, add tracking entry
+      if (status) {
+        const trackingData: any = {
+          order_id: orderId,
+          status,
+          status_message: `Order status updated to ${status}`
+        };
+
+        if (trackingNumber) {
+          trackingData.tracking_number = trackingNumber;
+        }
+
+        await supabase
+          .from('order_tracking')
+          .insert(trackingData);
+      }
+
+      // Invalidate both orders and tracking queries
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order-tracking'] });
+      
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast({
         title: "Order updated",
         description: "Order status has been updated successfully.",

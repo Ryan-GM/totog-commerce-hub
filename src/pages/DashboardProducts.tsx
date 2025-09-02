@@ -6,6 +6,7 @@ import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { useAdminProducts, useDeleteProduct } from "@/hooks/useAdminProducts";
 import { useAdminCategories } from "@/hooks/useAdminCategories";
 import { useAdminBrands } from "@/hooks/useAdminBrands";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   Table,
   TableBody,
@@ -37,6 +38,7 @@ export default function DashboardProducts() {
   const { data: categories } = useAdminCategories();
   const { data: brands } = useAdminBrands();
   const deleteProduct = useDeleteProduct();
+  const { formatCurrency } = useCurrency();
 
   const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -128,7 +130,7 @@ export default function DashboardProducts() {
                   <TableCell>{product.sku || '-'}</TableCell>
                   <TableCell>{product.categories?.name || '-'}</TableCell>
                   <TableCell>{product.brands?.name || '-'}</TableCell>
-                  <TableCell>${product.price}</TableCell>
+                  <TableCell>{formatCurrency(product.price)}</TableCell>
                   <TableCell>{product.stock_quantity}</TableCell>
                   <TableCell>
                     <Badge variant={product.is_active ? "default" : "secondary"}>

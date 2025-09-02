@@ -2,8 +2,9 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, Package } from "lucide-react";
 import { useAdminOrders, useAdminUpdateOrderStatus } from "@/hooks/useAdminOrders";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ export default function DashboardOrders() {
 
   const { data: orders, isLoading } = useAdminOrders();
   const updateOrderStatus = useAdminUpdateOrderStatus();
+  const { formatCurrency } = useCurrency();
 
   const filteredOrders = orders?.filter(order => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -131,7 +133,7 @@ export default function DashboardOrders() {
                     </div>
                   </TableCell>
                   <TableCell>{order.order_items?.length || 0} items</TableCell>
-                  <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                  <TableCell>{formatCurrency(order.total_amount)}</TableCell>
                   <TableCell>
                     <Select
                       value={order.status}
@@ -170,11 +172,30 @@ export default function DashboardOrders() {
                               <h4 className="font-semibold">Customer</h4>
                               <p>{order.profiles?.first_name} {order.profiles?.last_name}</p>
                               <p className="text-sm text-muted-foreground">{order.profiles?.email}</p>
+                              
                             </div>
                             <div>
                               <h4 className="font-semibold">Order Info</h4>
                               <p>Status: <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge></p>
-                              <p>Total: ${order.total_amount.toFixed(2)}</p>
+                              <p>Total: {formatCurrency(order.total_amount)}</p>
+                              <p className="text-sm">Payment: {order.payment_method || 'N/A'}</p>
+                              <p className="text-sm">Payment Status: <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'}>{order.payment_status}</Badge></p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold">Shipping Address</h4>
+                              <p className="text-sm">{order.shipping_address?.firstName} {order.shipping_address?.lastName}</p>
+                              <p className="text-sm">{order.shipping_address?.address}</p>
+                              <p className="text-sm">{order.shipping_address?.city}, {order.shipping_address?.zip}</p>
+                              <p className="text-sm">{order.shipping_address?.country}</p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">Billing Address</h4>
+                              <p className="text-sm">{order.billing_address?.firstName} {order.billing_address?.lastName}</p>
+                              <p className="text-sm">{order.billing_address?.address}</p>
+                              <p className="text-sm">{order.billing_address?.city}, {order.billing_address?.zip}</p>
+                              <p className="text-sm">{order.billing_address?.country}</p>
                             </div>
                           </div>
                           <div>
@@ -194,7 +215,7 @@ export default function DashboardOrders() {
                                   </div>
                                   <div>
                                     <span>Qty: {item.quantity}</span>
-                                    <span className="ml-4">${item.total_price.toFixed(2)}</span>
+                                    <span className="ml-4">{formatCurrency(item.total_price)}</span>
                                   </div>
                                 </div>
                               ))}
